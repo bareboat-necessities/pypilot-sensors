@@ -1,0 +1,46 @@
+name: arduino
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: pypilot-sensors
+      - uses: actions/checkout@v4
+        with:
+          repository: bareboat-necessities/pypilot-data-model
+          path: pypilot-data-model
+      - uses: actions/checkout@v4
+        with:
+          repository: bareboat-necessities/pypilot-algorithms
+          path: pypilot-algorithms
+      - uses: actions/checkout@v4
+        with:
+          repository: bareboat-necessities/pypilot-nmea0183-connector
+          path: pypilot-nmea0183-connector
+      - uses: actions/checkout@v4
+        with:
+          repository: bareboat-necessities/pypilot-signalk-connector
+          path: pypilot-signalk-connector
+      - uses: actions/checkout@v4
+        with:
+          repository: bareboat-necessities/pypilot-servo-protocol
+          path: pypilot-servo-protocol
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Install AVR core
+        run: arduino-cli core install arduino:avr
+      - name: Compile example
+        run: |
+          arduino-cli compile --fqbn arduino:avr:mega \
+            --libraries pypilot-sensors \
+            --libraries pypilot-data-model \
+            --libraries pypilot-algorithms \
+            --libraries pypilot-nmea0183-connector \
+            --libraries pypilot-signalk-connector \
+            --libraries pypilot-servo-protocol \
+            pypilot-sensors/examples/arduino/SensorsExample
