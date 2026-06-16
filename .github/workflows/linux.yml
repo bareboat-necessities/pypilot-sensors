@@ -1,0 +1,39 @@
+name: linux
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: pypilot-sensors
+      - uses: actions/checkout@v4
+        with:
+          repository: bareboat-necessities/pypilot-data-model
+          path: pypilot-data-model
+      - uses: actions/checkout@v4
+        with:
+          repository: bareboat-necessities/pypilot-algorithms
+          path: pypilot-algorithms
+      - uses: actions/checkout@v4
+        with:
+          repository: bareboat-necessities/pypilot-nmea0183-connector
+          path: pypilot-nmea0183-connector
+      - uses: actions/checkout@v4
+        with:
+          repository: bareboat-necessities/pypilot-signalk-connector
+          path: pypilot-signalk-connector
+      - uses: actions/checkout@v4
+        with:
+          repository: bareboat-necessities/pypilot-servo-protocol
+          path: pypilot-servo-protocol
+      - name: Configure
+        run: cmake -S pypilot-sensors -B pypilot-sensors/build
+      - name: Build
+        run: cmake --build pypilot-sensors/build
+      - name: Test
+        run: ctest --test-dir pypilot-sensors/build --output-on-failure
