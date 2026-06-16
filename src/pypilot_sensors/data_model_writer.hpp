@@ -1,0 +1,100 @@
+#pragma once
+
+#include <pypilot_data_model.hpp>
+#include <pypilot_algorithms.hpp>
+#include "samples.hpp"
+
+namespace pypilot_sensors {
+
+template<typename Real = float>
+class SensorDataModelWriter {
+public:
+    void write_imu(pypilot_data_model::DataModel<Real>& model, const ImuSample<Real>& sample) const {
+        if (sample.heading_valid) model.imu.heading_deg.set(pypilot_algorithms::wrap_360_deg(sample.heading_deg), sample.time_us);
+        if (sample.heading_rate_valid) model.imu.heading_rate_deg_s.set(sample.heading_rate_deg_s, sample.time_us);
+        if (sample.heading_rate_rate_valid) model.imu.heading_rate_rate_deg_s2.set(sample.heading_rate_rate_deg_s2, sample.time_us);
+        if (sample.pitch_valid) model.imu.pitch_deg.set(sample.pitch_deg, sample.time_us);
+        if (sample.roll_valid) model.imu.roll_deg.set(sample.roll_deg, sample.time_us);
+        if (sample.heel_valid) model.imu.heel_deg.set(sample.heel_deg, sample.time_us);
+        if (sample.accel_valid) model.imu.accel_g.set(sample.accel_g, sample.time_us);
+        if (sample.gyro_valid) model.imu.gyro_deg_s.set(sample.gyro_deg_s, sample.time_us);
+        if (sample.compass_valid) model.imu.compass_raw.set(sample.compass_raw, sample.time_us);
+    }
+
+    void write_gps(pypilot_data_model::DataModel<Real>& model, const GpsSample<Real>& sample) const {
+        if (sample.source != pypilot_data_model::SensorSource::none) model.navigation.gps.source.value = sample.source;
+        if (sample.speed_valid) model.navigation.gps.speed_kn.set(sample.speed_kn, sample.time_us);
+        if (sample.track_valid) model.navigation.gps.track_deg.set(pypilot_algorithms::wrap_360_deg(sample.track_deg), sample.time_us);
+        if (sample.fix_valid) {
+            model.navigation.gps.fix_lat_deg.set(sample.latitude_deg, sample.time_us);
+            model.navigation.gps.fix_lon_deg.set(sample.longitude_deg, sample.time_us);
+        }
+        if (sample.altitude_valid) model.navigation.gps.fix_alt_m.set(sample.altitude_m, sample.time_us);
+        if (sample.declination_valid) model.navigation.gps.declination_deg.set(sample.declination_deg, sample.time_us);
+        model.navigation.gps.last_update_us = sample.time_us;
+    }
+
+    void write_apb(pypilot_data_model::DataModel<Real>& model, const ApbSample<Real>& sample) const {
+        if (sample.source != pypilot_data_model::SensorSource::none) model.navigation.apb.source.value = sample.source;
+        if (sample.track_valid) model.navigation.apb.track_deg.set(pypilot_algorithms::wrap_360_deg(sample.track_deg), sample.time_us);
+        if (sample.xte_valid) model.navigation.apb.xte_nmi.set(sample.xte_nmi, sample.time_us);
+        model.navigation.apb.last_update_us = sample.time_us;
+    }
+
+    void write_wind(pypilot_data_model::DataModel<Real>& model, const WindSample<Real>& sample) const {
+        pypilot_data_model::WindSensorData<Real>& target = sample.true_wind ? model.wind.truewind : model.wind.apparent;
+        if (sample.source != pypilot_data_model::SensorSource::none) target.source.value = sample.source;
+        if (sample.speed_valid) target.speed_kn.set(sample.speed_kn, sample.time_us);
+        if (sample.direction_valid) target.direction_deg.set(pypilot_algorithms::wrap_180_deg(sample.direction_deg), sample.time_us);
+        target.last_update_us = sample.time_us;
+    }
+
+    void write_water(pypilot_data_model::DataModel<Real>& model, const WaterSample<Real>& sample) const {
+        if (sample.source != pypilot_data_model::SensorSource::none) model.water.source.value = sample.source;
+        if (sample.speed_valid) model.water.speed_kn.set(sample.speed_kn, sample.time_us);
+        if (sample.leeway_valid) {
+            model.water.leeway_deg.set(sample.leeway_deg, sample.time_us);
+            model.water.leeway_source.value = sample.source;
+        }
+        if (sample.current_valid) {
+            model.water.current_speed_kn.set(sample.current_speed_kn, sample.time_us);
+            model.water.current_direction_deg.set(pypilot_algorithms::wrap_360_deg(sample.current_direction_deg), sample.time_us);
+        }
+        model.water.last_update_us = sample.time_us;
+    }
+
+    void write_rudder(pypilot_data_model::DataModel<Real>& model, const RudderSample<Real>& sample) const {
+        if (sample.source != pypilot_data_model::SensorSource::none) model.rudder.source.value = sample.source;
+        if (sample.angle_valid) model.rudder.angle_deg.set(sample.angle_deg, sample.time_us);
+        if (sample.speed_valid) model.rudder.speed_deg_s.set(sample.speed_deg_s, sample.time_us);
+        if (sample.raw_valid) model.rudder.raw_0_1.set(sample.raw_0_1, sample.time_us);
+        model.rudder.last_update_us = sample.time_us;
+    }
+
+    void write_servo(pypilot_data_model::DataModel<Real>& model, const ServoTelemetrySample<Real>& sample) const {
+        if (sample.flags_valid) {
+            model.servo.flags.value = sample.flags;
+            model.servo.faults.value = sample.flags;
+            model.servo.engaged.value = (sample.flags & pypilot_data_model::servo_engaged_flag) != 0;
+            model.servo.has_state = true;
+            model.servo.has_controller = true;
+        }
+        if (sample.voltage_valid) model.servo.voltage_v.set(sample.voltage_v, sample.time_us);
+        if (sample.current_valid) model.servo.current_a.set(sample.current_a, sample.time_us);
+        if (sample.controller_temp_valid) model.servo.controller_temp_c.set(sample.controller_temp_c, sample.time_us);
+        if (sample.motor_temp_valid) model.servo.motor_temp_c.set(sample.motor_temp_c, sample.time_us);
+        if (sample.rudder.angle_valid || sample.rudder.raw_valid) write_rudder(model, sample.rudder);
+    }
+
+    void write_batch(pypilot_data_model::DataModel<Real>& model, const SensorBatch<Real>& batch) const {
+        if (batch.has_imu) write_imu(model, batch.imu);
+        if (batch.has_gps) write_gps(model, batch.gps);
+        if (batch.has_apb) write_apb(model, batch.apb);
+        if (batch.has_wind) write_wind(model, batch.wind);
+        if (batch.has_water) write_water(model, batch.water);
+        if (batch.has_rudder) write_rudder(model, batch.rudder);
+        if (batch.has_servo) write_servo(model, batch.servo);
+    }
+};
+
+} // namespace pypilot_sensors
