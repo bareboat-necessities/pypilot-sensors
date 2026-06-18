@@ -18,12 +18,13 @@ int main() {
     assert(model.water.speed_kn.valid);
     assert(nearf(model.water.speed_kn.value, 5.5f));
 
+    // PyPilot Python parse_nmea_rudder returns {'angle': -angle}.
     // $IIRSA,12.5,A,,V*4F
     assert(adapter.parse_and_apply_line("$IIRSA,12.5,A,,V*4F", model, 2000,
                                         pypilot_data_model::SensorSource::serial));
     assert(model.rudder.source.value == pypilot_data_model::SensorSource::serial);
     assert(model.rudder.last_update_us == 2000);
-    assert(nearf(model.rudder.angle_deg.value, 12.5f));
+    assert(nearf(model.rudder.angle_deg.value, -12.5f));
 
     return 0;
 }
