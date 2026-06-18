@@ -30,6 +30,7 @@ if(PYPILOT_SENSORS_BUILD_TESTS)
     endfunction()
 
     add_sensor_test(test_data_model_writer tests/test_data_model_writer.cpp)
+    add_sensor_test(test_source_device_arbitration tests/test_source_device_arbitration.cpp)
     add_sensor_test(test_nmea_adapter tests/test_nmea_adapter.cpp)
     add_sensor_test(test_signalk_adapter tests/test_signalk_adapter.cpp)
     add_sensor_test(test_servo_rudder_adapter tests/test_servo_rudder_adapter.cpp)
