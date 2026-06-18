@@ -10,6 +10,7 @@
 namespace pypilot_sensors {
 
 static const uint64_t default_source_device_timeout_us = 8000000ULL;
+static const uint64_t default_apb_update_min_interval_us = 500000ULL;
 
 enum class SourceArbitrationSlot : uint8_t {
     gps = 0,
@@ -33,6 +34,15 @@ inline bool sensor_device_id_equal(const char* a, const char* b) {
     if (a == 0) a = "";
     if (b == 0) b = "";
     return strncmp(a, b, 32) == 0;
+}
+
+inline bool apb_update_rate_allows(uint64_t now_us,
+                                   uint64_t last_update_us,
+                                   uint64_t min_interval_us = default_apb_update_min_interval_us) {
+    if (now_us < last_update_us) {
+        return true;
+    }
+    return (now_us - last_update_us) >= min_interval_us;
 }
 
 class SensorDevicePolicy {
