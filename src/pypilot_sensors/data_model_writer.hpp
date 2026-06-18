@@ -10,9 +10,13 @@ namespace pypilot_sensors {
 template<typename Real = float>
 class SensorDataModelWriter {
 public:
-    SensorDataModelWriter() {}
+    SensorDataModelWriter() : has_last_apb_update_(false), last_apb_update_us_(0) {}
 
-    void reset_arbitration() { arbiter_.reset(); }
+    void reset_arbitration() {
+        arbiter_.reset();
+        has_last_apb_update_ = false;
+        last_apb_update_us_ = 0;
+    }
     void set_source_timeout_us(uint64_t timeout_us) { arbiter_.set_timeout_us(timeout_us); }
     uint64_t source_timeout_us() const { return arbiter_.timeout_us(); }
 
@@ -52,6 +56,9 @@ public:
     }
 
     bool write_apb(pypilot_data_model::DataModel<Real>& model, const ApbSample<Real>& sample) const {
+        if (has_last_apb_update_ && !apb_update_rate_allows(sample.time_us, last_apb_update_us_)) {
+            return false;
+        }
         if (!arbiter_.accept(SourceArbitrationSlot::apb,
                              model.navigation.apb.source.value,
                              model.navigation.apb.last_update_us,
@@ -64,6 +71,8 @@ public:
         if (sample.track_valid) model.navigation.apb.track_deg.set(pypilot_algorithms::wrap_360_deg(sample.track_deg), sample.time_us);
         if (sample.xte_valid) model.navigation.apb.xte_nmi.set(sample.xte_nmi, sample.time_us);
         model.navigation.apb.last_update_us = sample.time_us;
+        last_apb_update_us_ = sample.time_us;
+        has_last_apb_update_ = true;
         return true;
     }
 
@@ -156,6 +165,8 @@ public:
 
 private:
     mutable SourceDeviceArbitrator arbiter_;
+    mutable bool has_last_apb_update_;
+    mutable uint64_t last_apb_update_us_;
 };
 
 } // namespace pypilot_sensors
