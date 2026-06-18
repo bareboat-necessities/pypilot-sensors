@@ -9,7 +9,8 @@ namespace pypilot_sensors {
 template<typename Real = float>
 class Nmea0183SensorAdapter {
 public:
-    Nmea0183SensorAdapter() : last_error_("") {}
+    Nmea0183SensorAdapter()
+        : has_last_apb_update_(false), last_apb_update_us_(0), last_error_("") {}
 
     const char* last_error() const { return last_error_; }
 
@@ -21,6 +22,11 @@ public:
         last_error_ = "";
         SourceArbitrationSlot slot;
         const bool has_slot = classify_sentence(sentence, slot);
+        if (has_slot && slot == SourceArbitrationSlot::apb &&
+            has_last_apb_update_ && !apb_update_rate_allows(now_us, last_apb_update_us_)) {
+            last_error_ = "APB rate limited";
+            return false;
+        }
         if (has_slot && !can_accept_slot(slot, model, source, device_id, now_us)) {
             last_error_ = "source rejected";
             return false;
@@ -29,7 +35,13 @@ public:
             last_error_ = connector_.last_error();
             return false;
         }
-        if (has_slot) arbiter_.accepted(slot, source, device_id);
+        if (has_slot) {
+            arbiter_.accepted(slot, source, device_id);
+            if (slot == SourceArbitrationSlot::apb) {
+                last_apb_update_us_ = now_us;
+                has_last_apb_update_ = true;
+            }
+        }
         tag_source(sentence, model, now_us, source);
         return true;
     }
@@ -47,12 +59,18 @@ public:
         return apply_sentence(sentence, model, now_us, source, device_id);
     }
 
-    void reset_arbitration() { arbiter_.reset(); }
+    void reset_arbitration() {
+        arbiter_.reset();
+        has_last_apb_update_ = false;
+        last_apb_update_us_ = 0;
+    }
 
 private:
     pypilot_nmea0183_connector::Nmea0183Connector<Real> connector_;
     pypilot_nmea0183_connector::Nmea0183StreamParser parser_;
     SourceDeviceArbitrator arbiter_;
+    bool has_last_apb_update_;
+    uint64_t last_apb_update_us_;
     const char* last_error_;
 
     static bool classify_sentence(const pypilot_nmea0183_connector::NmeaSentence& s,
