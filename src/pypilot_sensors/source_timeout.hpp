@@ -4,6 +4,7 @@
 
 #include <pypilot_data_model.hpp>
 #include <pypilot_algorithms.hpp>
+#include <pypilot_syslib.hpp>
 #include "source_policy.hpp"
 
 namespace pypilot_sensors {
@@ -17,7 +18,10 @@ inline void invalidate_sensor_value(StampedValue& value) {
 template<typename Real = float>
 class SensorSourceTimeoutManager {
 public:
-    SensorSourceTimeoutManager() : timeout_us_(default_source_device_timeout_us) {}
+    SensorSourceTimeoutManager() : timeout_us_(default_source_device_timeout_us), logger_(0) {}
+
+    void set_logger(pypilot_syslib::Logger* logger) { logger_ = logger; }
+    pypilot_syslib::Logger* logger() const { return logger_; }
 
     void set_timeout_us(uint64_t timeout_us) { timeout_us_ = timeout_us; }
     uint64_t timeout_us() const { return timeout_us_; }
@@ -26,8 +30,8 @@ public:
         bool changed = false;
         changed = timeout_gps(model, now_us) || changed;
         changed = timeout_apb(model, now_us) || changed;
-        changed = timeout_wind(model.wind.apparent, now_us) || changed;
-        changed = timeout_wind(model.wind.truewind, now_us) || changed;
+        changed = timeout_wind(model.wind.apparent, now_us, SourceArbitrationSlot::wind_apparent) || changed;
+        changed = timeout_wind(model.wind.truewind, now_us, SourceArbitrationSlot::wind_true) || changed;
         changed = timeout_water(model, now_us) || changed;
         changed = timeout_rudder(model, now_us) || changed;
         return changed;
@@ -40,6 +44,15 @@ private:
                pypilot_algorithms::pypilot_source_is_stale(now_us, last_update_us, timeout_us_);
     }
 
+    void log_timeout(uint64_t now_us, SourceArbitrationSlot slot) const {
+        pypilot_syslib::log_if(logger_, now_us,
+                               pypilot_syslib::LogLevel::Warn,
+                               pypilot_syslib::LogModule::Sensors,
+                               pypilot_syslib::LogEvent::SourceTimedOut,
+                               "sensor source timed out",
+                               static_cast<int32_t>(slot));
+    }
+
     bool timeout_gps(pypilot_data_model::DataModel<Real>& model, uint64_t now_us) const {
         if (!expired(model.navigation.gps.source.value, model.navigation.gps.last_update_us, now_us)) {
             return false;
@@ -48,6 +61,7 @@ private:
         invalidate_sensor_value(model.navigation.gps.track_deg);
         invalidate_sensor_value(model.navigation.gps.speed_kn);
         model.navigation.gps.last_update_us = 0;
+        log_timeout(now_us, SourceArbitrationSlot::gps);
         return true;
     }
 
@@ -58,10 +72,13 @@ private:
         model.navigation.apb.source.value = pypilot_data_model::SensorSource::none;
         model.navigation.apb.xte_nmi.set(Real(0), now_us);
         model.navigation.apb.last_update_us = 0;
+        log_timeout(now_us, SourceArbitrationSlot::apb);
         return true;
     }
 
-    bool timeout_wind(pypilot_data_model::WindSensorData<Real>& wind, uint64_t now_us) const {
+    bool timeout_wind(pypilot_data_model::WindSensorData<Real>& wind,
+                      uint64_t now_us,
+                      SourceArbitrationSlot slot) const {
         if (!expired(wind.source.value, wind.last_update_us, now_us)) {
             return false;
         }
@@ -71,6 +88,7 @@ private:
         invalidate_sensor_value(wind.filtered_direction_deg);
         invalidate_sensor_value(wind.filtered_speed_kn);
         wind.last_update_us = 0;
+        log_timeout(now_us, slot);
         return true;
     }
 
@@ -85,6 +103,7 @@ private:
         invalidate_sensor_value(model.water.current_speed_kn);
         invalidate_sensor_value(model.water.current_direction_deg);
         model.water.last_update_us = 0;
+        log_timeout(now_us, SourceArbitrationSlot::water);
         return true;
     }
 
@@ -97,10 +116,12 @@ private:
         invalidate_sensor_value(model.rudder.speed_deg_s);
         invalidate_sensor_value(model.rudder.raw_0_1);
         model.rudder.last_update_us = 0;
+        log_timeout(now_us, SourceArbitrationSlot::rudder);
         return true;
     }
 
     uint64_t timeout_us_;
+    pypilot_syslib::Logger* logger_;
 };
 
 } // namespace pypilot_sensors
