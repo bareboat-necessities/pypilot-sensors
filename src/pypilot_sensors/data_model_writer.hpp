@@ -2,6 +2,7 @@
 
 #include <pypilot_data_model.hpp>
 #include <pypilot_algorithms.hpp>
+#include <pypilot_syslib.hpp>
 #include "samples.hpp"
 #include "source_policy.hpp"
 
@@ -10,7 +11,10 @@ namespace pypilot_sensors {
 template<typename Real = float>
 class SensorDataModelWriter {
 public:
-    SensorDataModelWriter() : has_last_apb_update_(false), last_apb_update_us_(0) {}
+    SensorDataModelWriter() : has_last_apb_update_(false), last_apb_update_us_(0), logger_(0) {}
+
+    void set_logger(pypilot_syslib::Logger* logger) { logger_ = logger; }
+    pypilot_syslib::Logger* logger() const { return logger_; }
 
     void reset_arbitration() {
         arbiter_.reset();
@@ -34,14 +38,17 @@ public:
     }
 
     bool write_gps(pypilot_data_model::DataModel<Real>& model, const GpsSample<Real>& sample) const {
+        const pypilot_data_model::SensorSource previous_source = model.navigation.gps.source.value;
         if (!arbiter_.accept(SourceArbitrationSlot::gps,
                              model.navigation.gps.source.value,
                              model.navigation.gps.last_update_us,
                              sample.source,
                              sample.device_id,
                              sample.time_us)) {
+            log_source_rejected(sample.time_us, SourceArbitrationSlot::gps);
             return false;
         }
+        log_source_selected_if_changed(sample.time_us, SourceArbitrationSlot::gps, previous_source, sample.source);
         if (sample.source != pypilot_data_model::SensorSource::none) model.navigation.gps.source.value = sample.source;
         if (sample.speed_valid) model.navigation.gps.speed_kn.set(sample.speed_kn, sample.time_us);
         if (sample.track_valid) model.navigation.gps.track_deg.set(pypilot_algorithms::wrap_360_deg(sample.track_deg), sample.time_us);
@@ -57,16 +64,24 @@ public:
 
     bool write_apb(pypilot_data_model::DataModel<Real>& model, const ApbSample<Real>& sample) const {
         if (has_last_apb_update_ && !apb_update_rate_allows(sample.time_us, last_apb_update_us_)) {
+            pypilot_syslib::log_if(logger_, sample.time_us,
+                                   pypilot_syslib::LogLevel::Warn,
+                                   pypilot_syslib::LogModule::Sensors,
+                                   pypilot_syslib::LogEvent::ApbNavCommandRateLimited,
+                                   "apb update rate limited");
             return false;
         }
+        const pypilot_data_model::SensorSource previous_source = model.navigation.apb.source.value;
         if (!arbiter_.accept(SourceArbitrationSlot::apb,
                              model.navigation.apb.source.value,
                              model.navigation.apb.last_update_us,
                              sample.source,
                              sample.device_id,
                              sample.time_us)) {
+            log_source_rejected(sample.time_us, SourceArbitrationSlot::apb);
             return false;
         }
+        log_source_selected_if_changed(sample.time_us, SourceArbitrationSlot::apb, previous_source, sample.source);
         if (sample.source != pypilot_data_model::SensorSource::none) model.navigation.apb.source.value = sample.source;
         if (sample.track_valid) model.navigation.apb.track_deg.set(pypilot_algorithms::wrap_360_deg(sample.track_deg), sample.time_us);
         if (sample.xte_valid) model.navigation.apb.xte_nmi.set(sample.xte_nmi, sample.time_us);
@@ -79,14 +94,17 @@ public:
     bool write_wind(pypilot_data_model::DataModel<Real>& model, const WindSample<Real>& sample) const {
         pypilot_data_model::WindSensorData<Real>& target = sample.true_wind ? model.wind.truewind : model.wind.apparent;
         const SourceArbitrationSlot slot = sample.true_wind ? SourceArbitrationSlot::wind_true : SourceArbitrationSlot::wind_apparent;
+        const pypilot_data_model::SensorSource previous_source = target.source.value;
         if (!arbiter_.accept(slot,
                              target.source.value,
                              target.last_update_us,
                              sample.source,
                              sample.device_id,
                              sample.time_us)) {
+            log_source_rejected(sample.time_us, slot);
             return false;
         }
+        log_source_selected_if_changed(sample.time_us, slot, previous_source, sample.source);
         if (sample.source != pypilot_data_model::SensorSource::none) target.source.value = sample.source;
         if (sample.speed_valid) target.speed_kn.set(sample.speed_kn, sample.time_us);
         if (sample.direction_valid) target.direction_deg.set(pypilot_algorithms::wrap_180_deg(sample.direction_deg), sample.time_us);
@@ -95,14 +113,17 @@ public:
     }
 
     bool write_water(pypilot_data_model::DataModel<Real>& model, const WaterSample<Real>& sample) const {
+        const pypilot_data_model::SensorSource previous_source = model.water.source.value;
         if (!arbiter_.accept(SourceArbitrationSlot::water,
                              model.water.source.value,
                              model.water.last_update_us,
                              sample.source,
                              sample.device_id,
                              sample.time_us)) {
+            log_source_rejected(sample.time_us, SourceArbitrationSlot::water);
             return false;
         }
+        log_source_selected_if_changed(sample.time_us, SourceArbitrationSlot::water, previous_source, sample.source);
         if (sample.source != pypilot_data_model::SensorSource::none) model.water.source.value = sample.source;
         if (sample.speed_valid) model.water.speed_kn.set(sample.speed_kn, sample.time_us);
         if (sample.leeway_valid) {
@@ -118,14 +139,17 @@ public:
     }
 
     bool write_rudder(pypilot_data_model::DataModel<Real>& model, const RudderSample<Real>& sample) const {
+        const pypilot_data_model::SensorSource previous_source = model.rudder.source.value;
         if (!arbiter_.accept(SourceArbitrationSlot::rudder,
                              model.rudder.source.value,
                              model.rudder.last_update_us,
                              sample.source,
                              sample.device_id,
                              sample.time_us)) {
+            log_source_rejected(sample.time_us, SourceArbitrationSlot::rudder);
             return false;
         }
+        log_source_selected_if_changed(sample.time_us, SourceArbitrationSlot::rudder, previous_source, sample.source);
         if (sample.source != pypilot_data_model::SensorSource::none) model.rudder.source.value = sample.source;
         if (sample.angle_valid) model.rudder.angle_deg.set(sample.angle_deg, sample.time_us);
         if (sample.speed_valid) model.rudder.speed_deg_s.set(sample.speed_deg_s, sample.time_us);
@@ -164,9 +188,32 @@ public:
     }
 
 private:
+    void log_source_selected_if_changed(uint64_t time_us,
+                                        SourceArbitrationSlot slot,
+                                        pypilot_data_model::SensorSource previous_source,
+                                        pypilot_data_model::SensorSource incoming_source) const {
+        if (incoming_source == pypilot_data_model::SensorSource::none || previous_source == incoming_source) return;
+        pypilot_syslib::log_if(logger_, time_us,
+                               pypilot_syslib::LogLevel::Info,
+                               pypilot_syslib::LogModule::Sensors,
+                               pypilot_syslib::LogEvent::SourceSelected,
+                               "sensor source selected",
+                               static_cast<int32_t>(slot));
+    }
+
+    void log_source_rejected(uint64_t time_us, SourceArbitrationSlot slot) const {
+        pypilot_syslib::log_if(logger_, time_us,
+                               pypilot_syslib::LogLevel::Warn,
+                               pypilot_syslib::LogModule::Sensors,
+                               pypilot_syslib::LogEvent::SourceRejected,
+                               "sensor source rejected",
+                               static_cast<int32_t>(slot));
+    }
+
     mutable SourceDeviceArbitrator arbiter_;
     mutable bool has_last_apb_update_;
     mutable uint64_t last_apb_update_us_;
+    pypilot_syslib::Logger* logger_;
 };
 
 } // namespace pypilot_sensors
