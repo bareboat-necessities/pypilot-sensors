@@ -8,6 +8,7 @@ namespace pypilot_sensors {
 template<typename Real = float>
 struct ImuSample {
     uint64_t time_us = 0;
+    const char* device_id = 0;
     bool heading_valid = false;
     Real heading_deg = Real(0);
     bool heading_rate_valid = false;
@@ -31,6 +32,7 @@ struct ImuSample {
 template<typename Real = float>
 struct GpsSample {
     uint64_t time_us = 0;
+    const char* device_id = 0;
     pypilot_data_model::SensorSource source = pypilot_data_model::SensorSource::none;
     bool speed_valid = false;
     Real speed_kn = Real(0);
@@ -48,6 +50,7 @@ struct GpsSample {
 template<typename Real = float>
 struct ApbSample {
     uint64_t time_us = 0;
+    const char* device_id = 0;
     pypilot_data_model::SensorSource source = pypilot_data_model::SensorSource::none;
     bool track_valid = false;
     Real track_deg = Real(0);
@@ -58,6 +61,7 @@ struct ApbSample {
 template<typename Real = float>
 struct WindSample {
     uint64_t time_us = 0;
+    const char* device_id = 0;
     pypilot_data_model::SensorSource source = pypilot_data_model::SensorSource::none;
     bool true_wind = false;
     bool speed_valid = false;
@@ -69,6 +73,7 @@ struct WindSample {
 template<typename Real = float>
 struct WaterSample {
     uint64_t time_us = 0;
+    const char* device_id = 0;
     pypilot_data_model::SensorSource source = pypilot_data_model::SensorSource::none;
     bool speed_valid = false;
     Real speed_kn = Real(0);
@@ -82,6 +87,7 @@ struct WaterSample {
 template<typename Real = float>
 struct RudderSample {
     uint64_t time_us = 0;
+    const char* device_id = 0;
     pypilot_data_model::SensorSource source = pypilot_data_model::SensorSource::none;
     bool angle_valid = false;
     Real angle_deg = Real(0);
@@ -94,6 +100,7 @@ struct RudderSample {
 template<typename Real = float>
 struct ServoTelemetrySample {
     uint64_t time_us = 0;
+    const char* device_id = 0;
     bool flags_valid = false;
     uint32_t flags = 0;
     bool voltage_valid = false;
