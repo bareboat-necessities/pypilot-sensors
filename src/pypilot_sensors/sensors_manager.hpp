@@ -11,9 +11,13 @@ class SensorsManager {
 public:
     SensorsManager() {}
 
-    void apply_batch(pypilot_data_model::DataModel<Real>& model, const SensorBatch<Real>& batch) {
-        writer_.write_batch(model, batch);
+    bool apply_batch(pypilot_data_model::DataModel<Real>& model, const SensorBatch<Real>& batch) {
+        return writer_.write_batch(model, batch);
     }
+
+    void reset_arbitration() { writer_.reset_arbitration(); }
+    void set_source_timeout_us(uint64_t timeout_us) { writer_.set_source_timeout_us(timeout_us); }
+    uint64_t source_timeout_us() const { return writer_.source_timeout_us(); }
 
 private:
     SensorDataModelWriter<Real> writer_;
