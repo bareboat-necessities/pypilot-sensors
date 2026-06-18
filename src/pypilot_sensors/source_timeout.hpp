@@ -36,6 +36,7 @@ public:
 private:
     bool expired(pypilot_data_model::SensorSource source, uint64_t last_update_us, uint64_t now_us) const {
         return source != pypilot_data_model::SensorSource::none &&
+               last_update_us != 0 &&
                pypilot_algorithms::pypilot_source_is_stale(now_us, last_update_us, timeout_us_);
     }
 
