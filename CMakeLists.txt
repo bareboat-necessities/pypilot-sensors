@@ -10,6 +10,7 @@ set(PYPILOT_ALGORITHMS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../pypilot-algorithms/sr
 set(PYPILOT_NMEA0183_CONNECTOR_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../pypilot-nmea0183-connector/src" CACHE PATH "Path to pypilot-nmea0183-connector src")
 set(PYPILOT_SIGNALK_CONNECTOR_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../pypilot-signalk-connector/src" CACHE PATH "Path to pypilot-signalk-connector src")
 set(PYPILOT_SERVO_PROTOCOL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../pypilot-servo-protocol/src" CACHE PATH "Path to pypilot-servo-protocol src")
+set(PYPILOT_SYSLIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../pypilot-syslib/src" CACHE PATH "Path to pypilot-syslib src")
 
 add_library(pypilot_sensors STATIC src/pypilot_sensors.cpp)
 target_include_directories(pypilot_sensors PUBLIC
@@ -18,7 +19,8 @@ target_include_directories(pypilot_sensors PUBLIC
     ${PYPILOT_ALGORITHMS_DIR}
     ${PYPILOT_NMEA0183_CONNECTOR_DIR}
     ${PYPILOT_SIGNALK_CONNECTOR_DIR}
-    ${PYPILOT_SERVO_PROTOCOL_DIR})
+    ${PYPILOT_SERVO_PROTOCOL_DIR}
+    ${PYPILOT_SYSLIB_DIR})
 
 option(PYPILOT_SENSORS_BUILD_TESTS "Build pypilot-sensors tests" ON)
 if(PYPILOT_SENSORS_BUILD_TESTS)
