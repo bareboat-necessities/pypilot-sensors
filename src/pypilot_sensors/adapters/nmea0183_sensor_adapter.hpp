@@ -29,7 +29,6 @@ public:
             last_error_ = connector_.last_error();
             return false;
         }
-        normalize_sentence_output(sentence, model, now_us);
         if (has_slot) arbiter_.accepted(slot, source, device_id);
         tag_source(sentence, model, now_us, source);
         return true;
@@ -112,17 +111,6 @@ private:
             return true;
         }
         return true;
-    }
-
-    static void normalize_sentence_output(const pypilot_nmea0183_connector::NmeaSentence& s,
-                                          pypilot_data_model::DataModel<Real>& model,
-                                          uint64_t now_us) {
-        using namespace pypilot_nmea0183_connector;
-        if (formatter_is(s, "RSA") &&
-            model.rudder.angle_deg.valid &&
-            model.rudder.angle_deg.last_update_us == now_us) {
-            model.rudder.angle_deg.value = -model.rudder.angle_deg.value;
-        }
     }
 
     static void tag_source(const pypilot_nmea0183_connector::NmeaSentence& s,
