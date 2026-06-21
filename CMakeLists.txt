@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(pypilot-sensors VERSION 0.1.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -9,6 +9,7 @@ set(PYPILOT_DATA_MODEL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../pypilot-data-model/sr
 set(PYPILOT_ALGORITHMS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../pypilot-algorithms/src" CACHE PATH "Path to pypilot-algorithms src")
 set(PYPILOT_NMEA0183_CONNECTOR_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../pypilot-nmea0183-connector/src" CACHE PATH "Path to pypilot-nmea0183-connector src")
 set(PYPILOT_SIGNALK_CONNECTOR_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../pypilot-signalk-connector/src" CACHE PATH "Path to pypilot-signalk-connector src")
+set(PYPILOT_MDNS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../pypilot-mdns/src" CACHE PATH "Path to pypilot-mdns src")
 set(PYPILOT_SERVO_PROTOCOL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../pypilot-servo-protocol/src" CACHE PATH "Path to pypilot-servo-protocol src")
 set(PYPILOT_SYSLIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../pypilot-syslib/src" CACHE PATH "Path to pypilot-syslib src")
 
@@ -19,6 +20,7 @@ target_include_directories(pypilot_sensors PUBLIC
     ${PYPILOT_ALGORITHMS_DIR}
     ${PYPILOT_NMEA0183_CONNECTOR_DIR}
     ${PYPILOT_SIGNALK_CONNECTOR_DIR}
+    ${PYPILOT_MDNS_DIR}
     ${PYPILOT_SERVO_PROTOCOL_DIR}
     ${PYPILOT_SYSLIB_DIR})
 
