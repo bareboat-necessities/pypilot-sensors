@@ -1,7 +1,7 @@
 #pragma once
 
-#include <pypilot_nmea0183_connector.hpp>
-#include <pypilot_data_model.hpp>
+#include <nmea0183_connector.hpp>
+#include <ship_data_model.hpp>
 #include "../source_policy.hpp"
 
 namespace pypilot_sensors {
@@ -14,10 +14,10 @@ public:
 
     const char* last_error() const { return last_error_; }
 
-    bool apply_sentence(const pypilot_nmea0183_connector::NmeaSentence& sentence,
-                        pypilot_data_model::DataModel<Real>& model,
+    bool apply_sentence(const nmea0183_connector::NmeaSentence& sentence,
+                        ship_data_model::DataModel<Real>& model,
                         uint64_t now_us,
-                        pypilot_data_model::SensorSource source = pypilot_data_model::SensorSource::serial,
+                        ship_data_model::SensorSource source = ship_data_model::SensorSource::serial,
                         const char* device_id = 0) {
         last_error_ = "";
         SourceArbitrationSlot slot;
@@ -47,11 +47,11 @@ public:
     }
 
     bool parse_and_apply_line(const char* line,
-                              pypilot_data_model::DataModel<Real>& model,
+                              ship_data_model::DataModel<Real>& model,
                               uint64_t now_us,
-                              pypilot_data_model::SensorSource source = pypilot_data_model::SensorSource::serial,
+                              ship_data_model::SensorSource source = ship_data_model::SensorSource::serial,
                               const char* device_id = 0) {
-        pypilot_nmea0183_connector::NmeaSentence sentence;
+        nmea0183_connector::NmeaSentence sentence;
         if (!parser_.parse_line(line, sentence)) {
             last_error_ = parser_.last_error();
             return false;
@@ -66,41 +66,41 @@ public:
     }
 
 private:
-    pypilot_nmea0183_connector::Nmea0183Connector<Real> connector_;
-    pypilot_nmea0183_connector::Nmea0183StreamParser parser_;
+    nmea0183_connector::Nmea0183RxConnector<Real> connector_;
+    nmea0183_connector::Nmea0183StreamParser parser_;
     SourceDeviceArbitrator arbiter_;
     bool has_last_apb_update_;
     uint64_t last_apb_update_us_;
     const char* last_error_;
 
-    static bool classify_sentence(const pypilot_nmea0183_connector::NmeaSentence& s,
+    static bool classify_sentence(const nmea0183_connector::NmeaSentence& s,
                                   SourceArbitrationSlot& slot) {
-        using namespace pypilot_nmea0183_connector;
-        if (formatter_is(s, "RMC") || formatter_is(s, "GGA") || formatter_is(s, "VTG")) {
+        using namespace nmea0183_connector;
+        if (sentence_is(s, "RMC") || sentence_is(s, "GGA") || sentence_is(s, "VTG")) {
             slot = SourceArbitrationSlot::gps;
             return true;
         }
-        if (formatter_is(s, "APB") || formatter_is(s, "XTE")) {
+        if (sentence_is(s, "APB") || sentence_is(s, "XTE")) {
             slot = SourceArbitrationSlot::apb;
             return true;
         }
-        if (formatter_is(s, "MWV")) {
+        if (sentence_is(s, "MWV")) {
             slot = (s.field_count > 1 && s.field(1)[0] == 'T') ? SourceArbitrationSlot::wind_true : SourceArbitrationSlot::wind_apparent;
             return true;
         }
-        if (formatter_is(s, "VWR")) {
+        if (sentence_is(s, "VWR")) {
             slot = SourceArbitrationSlot::wind_apparent;
             return true;
         }
-        if (formatter_is(s, "VWT")) {
+        if (sentence_is(s, "VWT")) {
             slot = SourceArbitrationSlot::wind_true;
             return true;
         }
-        if (formatter_is(s, "VHW")) {
+        if (sentence_is(s, "VHW")) {
             slot = SourceArbitrationSlot::water;
             return true;
         }
-        if (formatter_is(s, "RSA")) {
+        if (sentence_is(s, "RSA")) {
             slot = SourceArbitrationSlot::rudder;
             return true;
         }
@@ -108,8 +108,8 @@ private:
     }
 
     bool can_accept_slot(SourceArbitrationSlot slot,
-                         const pypilot_data_model::DataModel<Real>& model,
-                         pypilot_data_model::SensorSource source,
+                         const ship_data_model::DataModel<Real>& model,
+                         ship_data_model::SensorSource source,
                          const char* device_id,
                          uint64_t now_us) const {
         switch (slot) {
@@ -131,18 +131,18 @@ private:
         return true;
     }
 
-    static void tag_source(const pypilot_nmea0183_connector::NmeaSentence& s,
-                           pypilot_data_model::DataModel<Real>& model,
+    static void tag_source(const nmea0183_connector::NmeaSentence& s,
+                           ship_data_model::DataModel<Real>& model,
                            uint64_t now_us,
-                           pypilot_data_model::SensorSource source) {
-        using namespace pypilot_nmea0183_connector;
-        if (formatter_is(s, "RMC") || formatter_is(s, "GGA") || formatter_is(s, "VTG")) {
+                           ship_data_model::SensorSource source) {
+        using namespace nmea0183_connector;
+        if (sentence_is(s, "RMC") || sentence_is(s, "GGA") || sentence_is(s, "VTG")) {
             model.navigation.gps.source.value = source;
             model.navigation.gps.last_update_us = now_us;
-        } else if (formatter_is(s, "APB") || formatter_is(s, "XTE")) {
+        } else if (sentence_is(s, "APB") || sentence_is(s, "XTE")) {
             model.navigation.apb.source.value = source;
             model.navigation.apb.last_update_us = now_us;
-        } else if (formatter_is(s, "MWV")) {
+        } else if (sentence_is(s, "MWV")) {
             if (s.field_count > 1 && s.field(1)[0] == 'T') {
                 model.wind.truewind.source.value = source;
                 model.wind.truewind.last_update_us = now_us;
@@ -150,16 +150,16 @@ private:
                 model.wind.apparent.source.value = source;
                 model.wind.apparent.last_update_us = now_us;
             }
-        } else if (formatter_is(s, "VWR")) {
+        } else if (sentence_is(s, "VWR")) {
             model.wind.apparent.source.value = source;
             model.wind.apparent.last_update_us = now_us;
-        } else if (formatter_is(s, "VWT")) {
+        } else if (sentence_is(s, "VWT")) {
             model.wind.truewind.source.value = source;
             model.wind.truewind.last_update_us = now_us;
-        } else if (formatter_is(s, "VHW")) {
+        } else if (sentence_is(s, "VHW")) {
             model.water.source.value = source;
             model.water.last_update_us = now_us;
-        } else if (formatter_is(s, "RSA")) {
+        } else if (sentence_is(s, "RSA")) {
             model.rudder.source.value = source;
             model.rudder.last_update_us = now_us;
         }
