@@ -7,7 +7,7 @@ using namespace pypilot_sensors;
 static bool nearf(float a, float b) { return std::fabs(a - b) < 0.0001f; }
 
 int main() {
-    pypilot_data_model::DataModel<float> model;
+    ship_data_model::DataModel<float> model;
     model.rudder.range_deg.value = 30.0f;
 
     pypilot_servo_protocol::Telemetry telemetry;
@@ -30,7 +30,7 @@ int main() {
     assert(model.servo.has_controller);
     assert(nearf(model.servo.voltage_v.value, 12.4f));
     assert(nearf(model.servo.current_a.value, 1.2f));
-    assert(model.rudder.source.value == pypilot_data_model::SensorSource::servo);
+    assert(model.rudder.source.value == ship_data_model::SensorSource::servo);
     assert(nearf(model.rudder.raw_0_1.value, 0.75f));
     assert(nearf(model.rudder.angle_deg.value, 7.5f));
 
