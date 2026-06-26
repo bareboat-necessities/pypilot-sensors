@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pypilot_data_model.hpp>
+#include <ship_data_model.hpp>
 #include <pypilot_algorithms.hpp>
 #include <pypilot_syslib.hpp>
 #include "samples.hpp"
@@ -24,7 +24,7 @@ public:
     void set_source_timeout_us(uint64_t timeout_us) { arbiter_.set_timeout_us(timeout_us); }
     uint64_t source_timeout_us() const { return arbiter_.timeout_us(); }
 
-    bool write_imu(pypilot_data_model::DataModel<Real>& model, const ImuSample<Real>& sample) const {
+    bool write_imu(ship_data_model::DataModel<Real>& model, const ImuSample<Real>& sample) const {
         if (sample.heading_valid) model.imu.heading_deg.set(pypilot_algorithms::wrap_360_deg(sample.heading_deg), sample.time_us);
         if (sample.heading_rate_valid) model.imu.heading_rate_deg_s.set(sample.heading_rate_deg_s, sample.time_us);
         if (sample.heading_rate_rate_valid) model.imu.heading_rate_rate_deg_s2.set(sample.heading_rate_rate_deg_s2, sample.time_us);
@@ -37,8 +37,8 @@ public:
         return true;
     }
 
-    bool write_gps(pypilot_data_model::DataModel<Real>& model, const GpsSample<Real>& sample) const {
-        const pypilot_data_model::SensorSource previous_source = model.navigation.gps.source.value;
+    bool write_gps(ship_data_model::DataModel<Real>& model, const GpsSample<Real>& sample) const {
+        const ship_data_model::SensorSource previous_source = model.navigation.gps.source.value;
         if (!arbiter_.accept(SourceArbitrationSlot::gps,
                              model.navigation.gps.source.value,
                              model.navigation.gps.last_update_us,
@@ -49,7 +49,7 @@ public:
             return false;
         }
         log_source_selected_if_changed(sample.time_us, SourceArbitrationSlot::gps, previous_source, sample.source);
-        if (sample.source != pypilot_data_model::SensorSource::none) model.navigation.gps.source.value = sample.source;
+        if (sample.source != ship_data_model::SensorSource::none) model.navigation.gps.source.value = sample.source;
         if (sample.speed_valid) model.navigation.gps.speed_kn.set(sample.speed_kn, sample.time_us);
         if (sample.track_valid) model.navigation.gps.track_deg.set(pypilot_algorithms::wrap_360_deg(sample.track_deg), sample.time_us);
         if (sample.fix_valid) {
@@ -62,7 +62,7 @@ public:
         return true;
     }
 
-    bool write_apb(pypilot_data_model::DataModel<Real>& model, const ApbSample<Real>& sample) const {
+    bool write_apb(ship_data_model::DataModel<Real>& model, const ApbSample<Real>& sample) const {
         if (has_last_apb_update_ && !apb_update_rate_allows(sample.time_us, last_apb_update_us_)) {
             pypilot_syslib::log_if(logger_, sample.time_us,
                                    pypilot_syslib::LogLevel::Warn,
@@ -71,7 +71,7 @@ public:
                                    "apb update rate limited");
             return false;
         }
-        const pypilot_data_model::SensorSource previous_source = model.navigation.apb.source.value;
+        const ship_data_model::SensorSource previous_source = model.navigation.apb.source.value;
         if (!arbiter_.accept(SourceArbitrationSlot::apb,
                              model.navigation.apb.source.value,
                              model.navigation.apb.last_update_us,
@@ -82,7 +82,7 @@ public:
             return false;
         }
         log_source_selected_if_changed(sample.time_us, SourceArbitrationSlot::apb, previous_source, sample.source);
-        if (sample.source != pypilot_data_model::SensorSource::none) model.navigation.apb.source.value = sample.source;
+        if (sample.source != ship_data_model::SensorSource::none) model.navigation.apb.source.value = sample.source;
         if (sample.track_valid) model.navigation.apb.track_deg.set(pypilot_algorithms::wrap_360_deg(sample.track_deg), sample.time_us);
         if (sample.xte_valid) model.navigation.apb.xte_nmi.set(sample.xte_nmi, sample.time_us);
         model.navigation.apb.last_update_us = sample.time_us;
@@ -91,10 +91,10 @@ public:
         return true;
     }
 
-    bool write_wind(pypilot_data_model::DataModel<Real>& model, const WindSample<Real>& sample) const {
-        pypilot_data_model::WindSensorData<Real>& target = sample.true_wind ? model.wind.truewind : model.wind.apparent;
+    bool write_wind(ship_data_model::DataModel<Real>& model, const WindSample<Real>& sample) const {
+        ship_data_model::WindSensorData<Real>& target = sample.true_wind ? model.wind.truewind : model.wind.apparent;
         const SourceArbitrationSlot slot = sample.true_wind ? SourceArbitrationSlot::wind_true : SourceArbitrationSlot::wind_apparent;
-        const pypilot_data_model::SensorSource previous_source = target.source.value;
+        const ship_data_model::SensorSource previous_source = target.source.value;
         if (!arbiter_.accept(slot,
                              target.source.value,
                              target.last_update_us,
@@ -105,15 +105,15 @@ public:
             return false;
         }
         log_source_selected_if_changed(sample.time_us, slot, previous_source, sample.source);
-        if (sample.source != pypilot_data_model::SensorSource::none) target.source.value = sample.source;
+        if (sample.source != ship_data_model::SensorSource::none) target.source.value = sample.source;
         if (sample.speed_valid) target.speed_kn.set(sample.speed_kn, sample.time_us);
         if (sample.direction_valid) target.direction_deg.set(pypilot_algorithms::wrap_180_deg(sample.direction_deg), sample.time_us);
         target.last_update_us = sample.time_us;
         return true;
     }
 
-    bool write_water(pypilot_data_model::DataModel<Real>& model, const WaterSample<Real>& sample) const {
-        const pypilot_data_model::SensorSource previous_source = model.water.source.value;
+    bool write_water(ship_data_model::DataModel<Real>& model, const WaterSample<Real>& sample) const {
+        const ship_data_model::SensorSource previous_source = model.water.source.value;
         if (!arbiter_.accept(SourceArbitrationSlot::water,
                              model.water.source.value,
                              model.water.last_update_us,
@@ -124,7 +124,7 @@ public:
             return false;
         }
         log_source_selected_if_changed(sample.time_us, SourceArbitrationSlot::water, previous_source, sample.source);
-        if (sample.source != pypilot_data_model::SensorSource::none) model.water.source.value = sample.source;
+        if (sample.source != ship_data_model::SensorSource::none) model.water.source.value = sample.source;
         if (sample.speed_valid) model.water.speed_kn.set(sample.speed_kn, sample.time_us);
         if (sample.leeway_valid) {
             model.water.leeway_deg.set(sample.leeway_deg, sample.time_us);
@@ -138,8 +138,8 @@ public:
         return true;
     }
 
-    bool write_rudder(pypilot_data_model::DataModel<Real>& model, const RudderSample<Real>& sample) const {
-        const pypilot_data_model::SensorSource previous_source = model.rudder.source.value;
+    bool write_rudder(ship_data_model::DataModel<Real>& model, const RudderSample<Real>& sample) const {
+        const ship_data_model::SensorSource previous_source = model.rudder.source.value;
         if (!arbiter_.accept(SourceArbitrationSlot::rudder,
                              model.rudder.source.value,
                              model.rudder.last_update_us,
@@ -150,7 +150,7 @@ public:
             return false;
         }
         log_source_selected_if_changed(sample.time_us, SourceArbitrationSlot::rudder, previous_source, sample.source);
-        if (sample.source != pypilot_data_model::SensorSource::none) model.rudder.source.value = sample.source;
+        if (sample.source != ship_data_model::SensorSource::none) model.rudder.source.value = sample.source;
         if (sample.angle_valid) model.rudder.angle_deg.set(sample.angle_deg, sample.time_us);
         if (sample.speed_valid) model.rudder.speed_deg_s.set(sample.speed_deg_s, sample.time_us);
         if (sample.raw_valid) model.rudder.raw_0_1.set(sample.raw_0_1, sample.time_us);
@@ -158,12 +158,12 @@ public:
         return true;
     }
 
-    bool write_servo(pypilot_data_model::DataModel<Real>& model, const ServoTelemetrySample<Real>& sample) const {
+    bool write_servo(ship_data_model::DataModel<Real>& model, const ServoTelemetrySample<Real>& sample) const {
         bool ok = true;
         if (sample.flags_valid) {
             model.servo.flags.value = sample.flags;
             model.servo.faults.value = sample.flags;
-            model.servo.engaged.value = (sample.flags & pypilot_data_model::servo_engaged_flag) != 0;
+            model.servo.engaged.value = (sample.flags & ship_data_model::servo_engaged_flag) != 0;
             model.servo.has_state = true;
             model.servo.has_controller = true;
         }
@@ -175,7 +175,7 @@ public:
         return ok;
     }
 
-    bool write_batch(pypilot_data_model::DataModel<Real>& model, const SensorBatch<Real>& batch) const {
+    bool write_batch(ship_data_model::DataModel<Real>& model, const SensorBatch<Real>& batch) const {
         bool ok = true;
         if (batch.has_imu) ok = write_imu(model, batch.imu) && ok;
         if (batch.has_gps) ok = write_gps(model, batch.gps) && ok;
@@ -190,9 +190,9 @@ public:
 private:
     void log_source_selected_if_changed(uint64_t time_us,
                                         SourceArbitrationSlot slot,
-                                        pypilot_data_model::SensorSource previous_source,
-                                        pypilot_data_model::SensorSource incoming_source) const {
-        if (incoming_source == pypilot_data_model::SensorSource::none || previous_source == incoming_source) return;
+                                        ship_data_model::SensorSource previous_source,
+                                        ship_data_model::SensorSource incoming_source) const {
+        if (incoming_source == ship_data_model::SensorSource::none || previous_source == incoming_source) return;
         pypilot_syslib::log_if(logger_, time_us,
                                pypilot_syslib::LogLevel::Info,
                                pypilot_syslib::LogModule::Sensors,
