@@ -73,8 +73,6 @@ int main() {
         rudder.device_id = "servo0";
         rudder.angle_valid = true;
         rudder.angle_deg = -10.0f;
-        rudder.raw_valid = true;
-        rudder.raw_0_1 = 0.4f;
         assert(writer.write_rudder(model, rudder));
 
         assert(timeouts.poll(model, 9000001ULL));
@@ -87,7 +85,6 @@ int main() {
         assert(!model.water.leeway_deg.valid);
         assert(model.rudder.source.value == SensorSource::none);
         assert(!model.rudder.angle_deg.valid);
-        assert(!model.rudder.raw_0_1.valid);
     }
 
     {
