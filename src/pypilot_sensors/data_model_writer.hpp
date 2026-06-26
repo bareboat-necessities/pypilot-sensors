@@ -130,10 +130,6 @@ public:
             model.water.leeway_deg.set(sample.leeway_deg, sample.time_us);
             model.water.leeway_source.value = sample.source;
         }
-        if (sample.current_valid) {
-            model.water.current_speed_kn.set(sample.current_speed_kn, sample.time_us);
-            model.water.current_direction_deg.set(pypilot_algorithms::wrap_360_deg(sample.current_direction_deg), sample.time_us);
-        }
         model.water.last_update_us = sample.time_us;
         return true;
     }
@@ -152,8 +148,6 @@ public:
         log_source_selected_if_changed(sample.time_us, SourceArbitrationSlot::rudder, previous_source, sample.source);
         if (sample.source != ship_data_model::SensorSource::none) model.rudder.source.value = sample.source;
         if (sample.angle_valid) model.rudder.angle_deg.set(sample.angle_deg, sample.time_us);
-        if (sample.speed_valid) model.rudder.speed_deg_s.set(sample.speed_deg_s, sample.time_us);
-        if (sample.raw_valid) model.rudder.raw_0_1.set(sample.raw_0_1, sample.time_us);
         model.rudder.last_update_us = sample.time_us;
         return true;
     }
@@ -162,16 +156,14 @@ public:
         bool ok = true;
         if (sample.flags_valid) {
             model.servo.flags.value = sample.flags;
-            model.servo.faults.value = sample.flags;
             model.servo.engaged.value = (sample.flags & ship_data_model::servo_engaged_flag) != 0;
-            model.servo.has_state = true;
             model.servo.has_controller = true;
         }
         if (sample.voltage_valid) model.servo.voltage_v.set(sample.voltage_v, sample.time_us);
         if (sample.current_valid) model.servo.current_a.set(sample.current_a, sample.time_us);
         if (sample.controller_temp_valid) model.servo.controller_temp_c.set(sample.controller_temp_c, sample.time_us);
         if (sample.motor_temp_valid) model.servo.motor_temp_c.set(sample.motor_temp_c, sample.time_us);
-        if (sample.rudder.angle_valid || sample.rudder.raw_valid) ok = write_rudder(model, sample.rudder);
+        if (sample.rudder.angle_valid) ok = write_rudder(model, sample.rudder);
         return ok;
     }
 
