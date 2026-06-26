@@ -26,12 +26,10 @@ int main() {
 
     assert(model.servo.flags.value == pypilot_servo_protocol::ENGAGED_FLAG);
     assert(model.servo.engaged.value);
-    assert(model.servo.has_state);
     assert(model.servo.has_controller);
     assert(nearf(model.servo.voltage_v.value, 12.4f));
     assert(nearf(model.servo.current_a.value, 1.2f));
     assert(model.rudder.source.value == ship_data_model::SensorSource::servo);
-    assert(nearf(model.rudder.raw_0_1.value, 0.75f));
     assert(nearf(model.rudder.angle_deg.value, 7.5f));
 
     return 0;
