@@ -3,20 +3,20 @@
 #include <pypilot_sensors.hpp>
 
 using namespace pypilot_sensors;
-using pypilot_data_model::SensorSource;
+using ship_data_model::SensorSource;
 
 static bool nearf(float a, float b) { return std::fabs(a - b) < 0.0001f; }
 
 int main() {
     {
-        pypilot_data_model::DataModel<float> model;
+        ship_data_model::DataModel<float> model;
         SensorSourceTimeoutManager<float> timeouts;
 
         assert(!timeouts.poll(model, 10000000ULL));
     }
 
     {
-        pypilot_data_model::DataModel<float> model;
+        ship_data_model::DataModel<float> model;
         SensorsManager<float> manager;
 
         SensorBatch<float> batch;
@@ -43,7 +43,7 @@ int main() {
     }
 
     {
-        pypilot_data_model::DataModel<float> model;
+        ship_data_model::DataModel<float> model;
         SensorDataModelWriter<float> writer;
         SensorSourceTimeoutManager<float> timeouts;
 
@@ -91,7 +91,7 @@ int main() {
     }
 
     {
-        pypilot_data_model::DataModel<float> model;
+        ship_data_model::DataModel<float> model;
         SensorDataModelWriter<float> writer;
         SensorSourceTimeoutManager<float> timeouts;
 
