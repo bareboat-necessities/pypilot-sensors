@@ -8,7 +8,7 @@ int main() {
     SensorBatch<float> batch;
     batch.has_gps = true;
     batch.gps.time_us = 100;
-    batch.gps.source = pypilot_data_model::SensorSource::serial;
+    batch.gps.source = ship_data_model::SensorSource::serial;
     batch.gps.speed_valid = true;
     batch.gps.speed_kn = 2.5f;
 
