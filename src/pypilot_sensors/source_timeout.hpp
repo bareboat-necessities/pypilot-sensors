@@ -86,7 +86,7 @@ private:
         invalidate_sensor_value(wind.direction_deg);
         invalidate_sensor_value(wind.speed_kn);
         invalidate_sensor_value(wind.filtered_direction_deg);
-        invalidate_sensor_value(wind.filtered_speed_kn);
+        invalidate_sensor_value(wind.speed_m_s);
         wind.last_update_us = 0;
         log_timeout(now_us, slot);
         return true;
@@ -100,8 +100,6 @@ private:
         model.water.leeway_source.value = ship_data_model::SensorSource::none;
         invalidate_sensor_value(model.water.speed_kn);
         invalidate_sensor_value(model.water.leeway_deg);
-        invalidate_sensor_value(model.water.current_speed_kn);
-        invalidate_sensor_value(model.water.current_direction_deg);
         model.water.last_update_us = 0;
         log_timeout(now_us, SourceArbitrationSlot::water);
         return true;
@@ -113,8 +111,6 @@ private:
         }
         model.rudder.source.value = ship_data_model::SensorSource::none;
         invalidate_sensor_value(model.rudder.angle_deg);
-        invalidate_sensor_value(model.rudder.speed_deg_s);
-        invalidate_sensor_value(model.rudder.raw_0_1);
         model.rudder.last_update_us = 0;
         log_timeout(now_us, SourceArbitrationSlot::rudder);
         return true;
