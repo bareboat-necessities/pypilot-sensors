@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include <pypilot_data_model.hpp>
+#include <ship_data_model.hpp>
 
 namespace pypilot_sensors {
 
@@ -22,18 +22,18 @@ struct ImuSample {
     bool heel_valid = false;
     Real heel_deg = Real(0);
     bool accel_valid = false;
-    pypilot_data_model::Vec3<Real> accel_g;
+    ship_data_model::Vec3<Real> accel_g;
     bool gyro_valid = false;
-    pypilot_data_model::Vec3<Real> gyro_deg_s;
+    ship_data_model::Vec3<Real> gyro_deg_s;
     bool compass_valid = false;
-    pypilot_data_model::Vec3<Real> compass_raw;
+    ship_data_model::Vec3<Real> compass_raw;
 };
 
 template<typename Real = float>
 struct GpsSample {
     uint64_t time_us = 0;
     const char* device_id = 0;
-    pypilot_data_model::SensorSource source = pypilot_data_model::SensorSource::none;
+    ship_data_model::SensorSource source = ship_data_model::SensorSource::none;
     bool speed_valid = false;
     Real speed_kn = Real(0);
     bool track_valid = false;
@@ -51,7 +51,7 @@ template<typename Real = float>
 struct ApbSample {
     uint64_t time_us = 0;
     const char* device_id = 0;
-    pypilot_data_model::SensorSource source = pypilot_data_model::SensorSource::none;
+    ship_data_model::SensorSource source = ship_data_model::SensorSource::none;
     bool track_valid = false;
     Real track_deg = Real(0);
     bool xte_valid = false;
@@ -62,7 +62,7 @@ template<typename Real = float>
 struct WindSample {
     uint64_t time_us = 0;
     const char* device_id = 0;
-    pypilot_data_model::SensorSource source = pypilot_data_model::SensorSource::none;
+    ship_data_model::SensorSource source = ship_data_model::SensorSource::none;
     bool true_wind = false;
     bool speed_valid = false;
     Real speed_kn = Real(0);
@@ -74,7 +74,7 @@ template<typename Real = float>
 struct WaterSample {
     uint64_t time_us = 0;
     const char* device_id = 0;
-    pypilot_data_model::SensorSource source = pypilot_data_model::SensorSource::none;
+    ship_data_model::SensorSource source = ship_data_model::SensorSource::none;
     bool speed_valid = false;
     Real speed_kn = Real(0);
     bool leeway_valid = false;
@@ -88,7 +88,7 @@ template<typename Real = float>
 struct RudderSample {
     uint64_t time_us = 0;
     const char* device_id = 0;
-    pypilot_data_model::SensorSource source = pypilot_data_model::SensorSource::none;
+    ship_data_model::SensorSource source = ship_data_model::SensorSource::none;
     bool angle_valid = false;
     Real angle_deg = Real(0);
     bool speed_valid = false;
