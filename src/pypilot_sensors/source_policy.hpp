@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <pypilot_data_model.hpp>
+#include <ship_data_model.hpp>
 #include <pypilot_algorithms.hpp>
 
 namespace pypilot_sensors {
@@ -47,34 +47,34 @@ inline bool apb_update_rate_allows(uint64_t now_us,
 
 class SensorDevicePolicy {
 public:
-    SensorDevicePolicy() : source_(pypilot_data_model::SensorSource::none), has_device_(false) {
+    SensorDevicePolicy() : source_(ship_data_model::SensorSource::none), has_device_(false) {
         device_[0] = '\0';
     }
 
     void reset() {
-        source_ = pypilot_data_model::SensorSource::none;
+        source_ = ship_data_model::SensorSource::none;
         has_device_ = false;
         device_[0] = '\0';
     }
 
-    bool accepts(pypilot_data_model::SensorSource current_source,
+    bool accepts(ship_data_model::SensorSource current_source,
                  uint64_t current_last_update_us,
-                 pypilot_data_model::SensorSource incoming_source,
+                 ship_data_model::SensorSource incoming_source,
                  const char* incoming_device,
                  uint64_t now_us,
                  uint64_t timeout_us = default_source_device_timeout_us) const {
-        const bool current_live = current_source != pypilot_data_model::SensorSource::none &&
+        const bool current_live = current_source != ship_data_model::SensorSource::none &&
                                   sensor_source_is_live(now_us, current_last_update_us, timeout_us);
 
-        if (incoming_source == pypilot_data_model::SensorSource::none) {
+        if (incoming_source == ship_data_model::SensorSource::none) {
             return !current_live;
         }
-        if (!current_live || current_source == pypilot_data_model::SensorSource::none) {
+        if (!current_live || current_source == ship_data_model::SensorSource::none) {
             return true;
         }
 
-        const int incoming_priority = pypilot_data_model::source_priority(incoming_source);
-        const int current_priority = pypilot_data_model::source_priority(current_source);
+        const int incoming_priority = ship_data_model::source_priority(incoming_source);
+        const int current_priority = ship_data_model::source_priority(current_source);
         if (incoming_priority < current_priority) {
             return true;
         }
@@ -88,8 +88,8 @@ public:
         return true;
     }
 
-    void accepted(pypilot_data_model::SensorSource incoming_source, const char* incoming_device) {
-        if (incoming_source == pypilot_data_model::SensorSource::none) {
+    void accepted(ship_data_model::SensorSource incoming_source, const char* incoming_device) {
+        if (incoming_source == ship_data_model::SensorSource::none) {
             reset();
             return;
         }
@@ -103,7 +103,7 @@ public:
         has_device_ = true;
     }
 
-    pypilot_data_model::SensorSource source() const { return source_; }
+    ship_data_model::SensorSource source() const { return source_; }
     const char* device_id() const { return has_device_ ? device_ : ""; }
     bool has_device() const { return has_device_; }
 
@@ -116,7 +116,7 @@ private:
         device_[i] = '\0';
     }
 
-    pypilot_data_model::SensorSource source_;
+    ship_data_model::SensorSource source_;
     bool has_device_;
     char device_[32];
 };
@@ -135,9 +135,9 @@ public:
     uint64_t timeout_us() const { return timeout_us_; }
 
     bool can_accept(SourceArbitrationSlot slot,
-                    pypilot_data_model::SensorSource current_source,
+                    ship_data_model::SensorSource current_source,
                     uint64_t current_last_update_us,
-                    pypilot_data_model::SensorSource incoming_source,
+                    ship_data_model::SensorSource incoming_source,
                     const char* incoming_device,
                     uint64_t now_us) const {
         return policy(slot).accepts(current_source,
@@ -149,15 +149,15 @@ public:
     }
 
     void accepted(SourceArbitrationSlot slot,
-                  pypilot_data_model::SensorSource incoming_source,
+                  ship_data_model::SensorSource incoming_source,
                   const char* incoming_device) {
         policy(slot).accepted(incoming_source, incoming_device);
     }
 
     bool accept(SourceArbitrationSlot slot,
-                pypilot_data_model::SensorSource current_source,
+                ship_data_model::SensorSource current_source,
                 uint64_t current_last_update_us,
-                pypilot_data_model::SensorSource incoming_source,
+                ship_data_model::SensorSource incoming_source,
                 const char* incoming_device,
                 uint64_t now_us) {
         if (!can_accept(slot, current_source, current_last_update_us, incoming_source, incoming_device, now_us)) {
