@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include <pypilot_data_model.hpp>
+#include <ship_data_model.hpp>
 #include <pypilot_algorithms.hpp>
 #include <pypilot_syslib.hpp>
 #include "source_policy.hpp"
@@ -26,7 +26,7 @@ public:
     void set_timeout_us(uint64_t timeout_us) { timeout_us_ = timeout_us; }
     uint64_t timeout_us() const { return timeout_us_; }
 
-    bool poll(pypilot_data_model::DataModel<Real>& model, uint64_t now_us) const {
+    bool poll(ship_data_model::DataModel<Real>& model, uint64_t now_us) const {
         bool changed = false;
         changed = timeout_gps(model, now_us) || changed;
         changed = timeout_apb(model, now_us) || changed;
@@ -38,8 +38,8 @@ public:
     }
 
 private:
-    bool expired(pypilot_data_model::SensorSource source, uint64_t last_update_us, uint64_t now_us) const {
-        return source != pypilot_data_model::SensorSource::none &&
+    bool expired(ship_data_model::SensorSource source, uint64_t last_update_us, uint64_t now_us) const {
+        return source != ship_data_model::SensorSource::none &&
                last_update_us != 0 &&
                pypilot_algorithms::pypilot_source_is_stale(now_us, last_update_us, timeout_us_);
     }
@@ -53,11 +53,11 @@ private:
                                static_cast<int32_t>(slot));
     }
 
-    bool timeout_gps(pypilot_data_model::DataModel<Real>& model, uint64_t now_us) const {
+    bool timeout_gps(ship_data_model::DataModel<Real>& model, uint64_t now_us) const {
         if (!expired(model.navigation.gps.source.value, model.navigation.gps.last_update_us, now_us)) {
             return false;
         }
-        model.navigation.gps.source.value = pypilot_data_model::SensorSource::none;
+        model.navigation.gps.source.value = ship_data_model::SensorSource::none;
         invalidate_sensor_value(model.navigation.gps.track_deg);
         invalidate_sensor_value(model.navigation.gps.speed_kn);
         model.navigation.gps.last_update_us = 0;
@@ -65,24 +65,24 @@ private:
         return true;
     }
 
-    bool timeout_apb(pypilot_data_model::DataModel<Real>& model, uint64_t now_us) const {
+    bool timeout_apb(ship_data_model::DataModel<Real>& model, uint64_t now_us) const {
         if (!expired(model.navigation.apb.source.value, model.navigation.apb.last_update_us, now_us)) {
             return false;
         }
-        model.navigation.apb.source.value = pypilot_data_model::SensorSource::none;
+        model.navigation.apb.source.value = ship_data_model::SensorSource::none;
         model.navigation.apb.xte_nmi.set(Real(0), now_us);
         model.navigation.apb.last_update_us = 0;
         log_timeout(now_us, SourceArbitrationSlot::apb);
         return true;
     }
 
-    bool timeout_wind(pypilot_data_model::WindSensorData<Real>& wind,
+    bool timeout_wind(ship_data_model::WindSensorData<Real>& wind,
                       uint64_t now_us,
                       SourceArbitrationSlot slot) const {
         if (!expired(wind.source.value, wind.last_update_us, now_us)) {
             return false;
         }
-        wind.source.value = pypilot_data_model::SensorSource::none;
+        wind.source.value = ship_data_model::SensorSource::none;
         invalidate_sensor_value(wind.direction_deg);
         invalidate_sensor_value(wind.speed_kn);
         invalidate_sensor_value(wind.filtered_direction_deg);
@@ -92,12 +92,12 @@ private:
         return true;
     }
 
-    bool timeout_water(pypilot_data_model::DataModel<Real>& model, uint64_t now_us) const {
+    bool timeout_water(ship_data_model::DataModel<Real>& model, uint64_t now_us) const {
         if (!expired(model.water.source.value, model.water.last_update_us, now_us)) {
             return false;
         }
-        model.water.source.value = pypilot_data_model::SensorSource::none;
-        model.water.leeway_source.value = pypilot_data_model::SensorSource::none;
+        model.water.source.value = ship_data_model::SensorSource::none;
+        model.water.leeway_source.value = ship_data_model::SensorSource::none;
         invalidate_sensor_value(model.water.speed_kn);
         invalidate_sensor_value(model.water.leeway_deg);
         invalidate_sensor_value(model.water.current_speed_kn);
@@ -107,11 +107,11 @@ private:
         return true;
     }
 
-    bool timeout_rudder(pypilot_data_model::DataModel<Real>& model, uint64_t now_us) const {
+    bool timeout_rudder(ship_data_model::DataModel<Real>& model, uint64_t now_us) const {
         if (!expired(model.rudder.source.value, model.rudder.last_update_us, now_us)) {
             return false;
         }
-        model.rudder.source.value = pypilot_data_model::SensorSource::none;
+        model.rudder.source.value = ship_data_model::SensorSource::none;
         invalidate_sensor_value(model.rudder.angle_deg);
         invalidate_sensor_value(model.rudder.speed_deg_s);
         invalidate_sensor_value(model.rudder.raw_0_1);
