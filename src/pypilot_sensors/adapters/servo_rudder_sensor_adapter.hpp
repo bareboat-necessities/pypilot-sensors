@@ -1,7 +1,7 @@
 #pragma once
 
 #include <pypilot_servo_protocol.hpp>
-#include <pypilot_data_model.hpp>
+#include <ship_data_model.hpp>
 #include "../samples.hpp"
 #include "../data_model_writer.hpp"
 
@@ -27,7 +27,7 @@ public:
         if (telemetry.has_rudder) {
             sample.rudder.time_us = now_us;
             sample.rudder.device_id = device_id;
-            sample.rudder.source = pypilot_data_model::SensorSource::servo;
+            sample.rudder.source = ship_data_model::SensorSource::servo;
             sample.rudder.raw_valid = telemetry.rudder_valid;
             sample.rudder.raw_0_1 = static_cast<Real>(telemetry.rudder + 0.5f);
             if (telemetry.rudder_valid && rudder_range_deg > Real(0)) {
@@ -39,7 +39,7 @@ public:
     }
 
     bool apply_telemetry(const pypilot_servo_protocol::Telemetry& telemetry,
-                         pypilot_data_model::DataModel<Real>& model,
+                         ship_data_model::DataModel<Real>& model,
                          uint64_t now_us,
                          const char* device_id = 0) const {
         ServoTelemetrySample<Real> sample = make_sample(telemetry, now_us, model.rudder.range_deg.value, device_id);
