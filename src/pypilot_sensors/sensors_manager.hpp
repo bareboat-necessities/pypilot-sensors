@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pypilot_data_model.hpp>
+#include <ship_data_model.hpp>
 #include "samples.hpp"
 #include "data_model_writer.hpp"
 #include "source_timeout.hpp"
@@ -12,11 +12,11 @@ class SensorsManager {
 public:
     SensorsManager() {}
 
-    bool apply_batch(pypilot_data_model::DataModel<Real>& model, const SensorBatch<Real>& batch) {
+    bool apply_batch(ship_data_model::DataModel<Real>& model, const SensorBatch<Real>& batch) {
         return writer_.write_batch(model, batch);
     }
 
-    bool poll_timeouts(pypilot_data_model::DataModel<Real>& model, uint64_t now_us) const {
+    bool poll_timeouts(ship_data_model::DataModel<Real>& model, uint64_t now_us) const {
         return timeout_manager_.poll(model, now_us);
     }
 
