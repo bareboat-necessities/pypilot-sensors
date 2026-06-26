@@ -4,13 +4,13 @@
 #include <pypilot_signalk_connector.hpp>
 
 using namespace pypilot_sensors;
-using pypilot_data_model::SensorSource;
+using ship_data_model::SensorSource;
 
 static bool nearf(float a, float b) { return std::fabs(a - b) < 0.0001f; }
 
 int main() {
     {
-        pypilot_data_model::DataModel<float> model;
+        ship_data_model::DataModel<float> model;
         SensorDataModelWriter<float> writer;
 
         ApbSample<float> apb;
@@ -38,7 +38,7 @@ int main() {
     }
 
     {
-        pypilot_data_model::DataModel<float> model;
+        ship_data_model::DataModel<float> model;
         SignalKSensorAdapter<float> adapter;
 
         assert(adapter.apply_number(pypilot_signalk_connector::SignalKPath::apb_heading_true,
